@@ -10,60 +10,62 @@ import json
 
 start_time = time.time()
 
-# File formatted with {word: key, word2: key, ...}
-with open('everygrams5000_dict.txt', 'r') as inFile:
-    n_dict = json.load(inFile)
+class TextGeneration(object):
+    n_dict = {}
+    def __init__(self, ngrams_path):
+        with open(ngrams_path, 'r') as inFile:
+            self.n_dict = json.load(inFile)
 
-# Joins list of words into string
-def join_words(l):
-    result = ''
-    for w in l:
-        result += w + ' '
-    # Return string without trailing spaces
-    return result.strip()
+    # Joins list of words into string
+    def join_words(self, l):
+        result = ''
+        for w in l:
+            result += w + ' '
+        # Return string without trailing spaces
+        return result.strip()
 
 
-# Gets last 3 words of string, or two or one
-def get_last_three(str, seed):
-    words = str.strip(' ,.()\'\"').split(' ')
-    length = len(words)
-    subset = []
-    # Truncate phrase to look at 'seed' number of words, and initialize subset list
-    if length >= seed:
-        subset = words[-seed:]
-    elif length == 0:
-        return [key.strip() for key in n_dict[:3]]
-    else:
-        subset = words
+    # Gets last 3 words of string, or two or one
+    def get_last_three(self, str, seed):
+        words = str.strip(' ,.()\'\"').split(' ')
+        length = len(words)
+        subset = []
+        # Truncate phrase to look at 'seed' number of words, and initialize subset list
+        if length >= seed:
+            subset = words[-seed:]
+        elif length == 0:
+            return [key.strip() for key in self.n_dict[:3]]
+        else:
+            subset = words
 
-    subset_str = join_words(subset)
-    # If subset is in a dict key, missing a word
-    suggestions = []
-    # Search for 3 suggestions
-    offset_length = 0
-    # Get 3 suggestions, or stop if looking for 
-    while len(suggestions) < 3 and length + offset_length <= 7:
-        offset_length += 1
-        for key in n_dict:
-            if len(suggestions) == 3:
-                break
-            if n_dict[key] == length + offset_length:
-                # if subset is found in the FIRST part of the key
-                if re.search(r'\b' + subset_str + r'\b', key) and key.find(subset_str) == 0:
-                    suggestions.append(key.strip())
+        subset_str = self.join_words(subset)
+        # If subset is in a dict key, missing a word
+        suggestions = []
+        # Search for 3 suggestions
+        offset_length = 0
+        # Get 3 suggestions, or stop if looking for 
+        while len(suggestions) < 3 and length + offset_length <= 7:
+            offset_length += 1
+            for key in self.n_dict:
+                if len(suggestions) == 3:
+                    break
+                if self.n_dict[key] == length + offset_length:
+                    # if subset is found in the FIRST part of the key
+                    if re.search(r'\b' + subset_str + r'\b', key) and key.find(subset_str) == 0:
+                        suggestions.append(key.strip())
 
-    # Suggestions are formed with original prompt still included
-    pared_suggestions = []
-    for e in suggestions:
-        pared_suggestions.append(e.removeprefix(subset_str).strip())
-    return pared_suggestions
-    
-
+        # Suggestions are formed with original prompt still included
+        pared_suggestions = []
+        for e in suggestions:
+            pared_suggestions.append(e.removeprefix(subset_str).strip())
+        return pared_suggestions
 
 # if largest subset of words is noticed in top5000, return next words in sequence
-prompt = 'if you are '
+prompt = 'i  '
 seed_length = 5
-print(get_last_three(prompt, seed_length))
+
+generate = TextGeneration('everygrams5000_dict.txt')
+print(generate.get_last_three(prompt, seed_length))
 
 end_time = time.time()
 print(f'Execution time: {1000 * round(end_time - start_time, 8)}ms')
